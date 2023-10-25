@@ -1,4 +1,5 @@
 package nl.knaw.huc.di.annorepo.tools
+
 import org.junit.jupiter.api.Test
 
 class PerformanceTesterTest {
