@@ -12,12 +12,14 @@ import org.slf4j.LoggerFactory
 import nl.knaw.huc.annorepo.api.WebAnnotationAsMap
 import nl.knaw.huc.annorepo.client.AnnoRepoClient
 
-class PerformanceTester {
+object PerformanceTester {
     private val log = LoggerFactory.getLogger(PerformanceTester::class.java)
     private val restContainer = "rest-test-container"
     private val grpcContainer = "grpc-test-container"
     private val mapper = ObjectMapper().apply { registerModules(kotlinModule()) }
     private val path = "/Users/bram/workspaces/globalise/globalise-tools/out/px_textline_annotations.json"
+
+    @JvmStatic
     fun main(args: Array<String>) {
         runBlocking {
             val annoRepoClient = AnnoRepoClient(serverURI = URI("http://localhost:2023"), apiKey = "dummy-api-key")

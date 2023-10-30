@@ -7,7 +7,6 @@ class PerformanceTesterTest {
     @Disabled
     @Test
     fun main() {
-        val pt = PerformanceTester()
-        pt.main(arrayOf())
+        PerformanceTester.main(arrayOf())
     }
 }
