@@ -17,24 +17,27 @@ class PerformanceTester {
     private val restContainer = "rest-test-container"
     private val grpcContainer = "grpc-test-container"
     private val mapper = ObjectMapper().apply { registerModules(kotlinModule()) }
-    fun main(args: Array<String>) = runBlocking {
-        val annoRepoClient = AnnoRepoClient(serverURI = URI("http://localhost:2023"), apiKey = "dummy-api-key")
-        val annotations: List<WebAnnotationAsMap> =
-            loadAnnotations("/Users/bram/data/globalise/NL-HaNA_1.04.02_3997_web_annotations.json")
-        val total = annotations.size
-        println("uploading $total annotations:")
+    private val path = "/Users/bram/workspaces/globalise/globalise-tools/out/px_textline_annotations.json"
+    fun main(args: Array<String>) {
+        runBlocking {
+            val annoRepoClient = AnnoRepoClient(serverURI = URI("http://localhost:2023"), apiKey = "dummy-api-key")
+            val annotations: List<WebAnnotationAsMap> =
+                loadAnnotations(path)
+            val total = annotations.size
+            println("uploading $total annotations:")
 
-        val restElapsed = measureTimeMillis {
-            uploadUsingRest(annoRepoClient, restContainer, annotations)
-        }
-        val restAvg: Float = restElapsed / (total).toFloat()
-        println("using rest: ${(restElapsed).toFloat() / 1000} seconds = $restAvg milliseconds/annotation")
+            val restElapsed = measureTimeMillis {
+                uploadUsingRest(annoRepoClient, restContainer, annotations)
+            }
+            val restAvg: Float = restElapsed / (total).toFloat()
+            println("using rest: ${(restElapsed).toFloat() / 1000} seconds = $restAvg milliseconds/annotation")
 
-        val grpcElapsed = measureTimeMillis {
-            uploadUsingGrpc(annoRepoClient, grpcContainer, annotations)
+            val grpcElapsed = measureTimeMillis {
+                uploadUsingGrpc(annoRepoClient, grpcContainer, annotations)
+            }
+            val grpcAvg: Float = grpcElapsed / (total).toFloat()
+            println("using gRPC: ${(grpcElapsed).toFloat() / 1000} seconds = $grpcAvg milliseconds/annotation")
         }
-        val grpcAvg: Float = grpcElapsed / (total).toFloat()
-        println("using gRPC: ${(grpcElapsed).toFloat() / 1000} seconds = $grpcAvg milliseconds/annotation")
     }
 
     private fun loadAnnotations(path: String): List<WebAnnotationAsMap> {
