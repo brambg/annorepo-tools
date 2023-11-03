@@ -87,6 +87,14 @@ class PerformanceTesterTest {
                 .withFailMessage { "annotation should not be readable by anonymous user" }
                 .isTrue()
 
+            rootClient.setAnonymousUserReadAccess(protectedContainerName, true).bind()
+
+            val anonymousReadResponse2 =
+                anonymousClient.getAnnotation(addResponse.containerName, addResponse.annotationName)
+            assertThat(anonymousReadResponse2.isRight())
+                .withFailMessage { "annotation should be readable by anonymous user" }
+                .isTrue()
+
         }.mapLeft {
             log.error("error: {}", it.message)
             fail()
