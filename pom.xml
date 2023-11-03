@@ -17,7 +17,7 @@
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <kotlin.version>1.9.10</kotlin.version>
+        <kotlin.version>1.9.20</kotlin.version>
         <kotlin.code.style>official</kotlin.code.style>
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -26,8 +26,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-        <junit-jupiter.version>5.10.0</junit-jupiter.version>
-        <annorepo.version>0.5.5</annorepo.version>
+        <annorepo.version>0.6.0-SNAPSHOT</annorepo.version>
 
         <!-- test dependencies -->
         <assertj-core.version>3.24.2</assertj-core.version>
