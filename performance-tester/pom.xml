@@ -131,6 +131,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>${maven-shade-plugin.version}</version>
@@ -166,8 +167,11 @@
                                 <exclude>META-INF/LICENSE</exclude>
                                 <exclude>META-INF/NOTICE</exclude>
                                 <exclude>META-INF/arrow-core.kotlin_module</exclude>
+                                <exclude>META-INF/kotlin-project-structure-metadata.json</exclude>
+                                <exclude>META-INF/mailcap.default</exclude>
                                 <exclude>META-INF/maven/*/*/pom.properties</exclude>
                                 <exclude>META-INF/maven/*/*/pom.xml</exclude>
+                                <exclude>META-INF/mimetypes.default</exclude>
                                 <exclude>META-INF/versions/*/*.class</exclude>
                                 <exclude>about.html</exclude>
                                 <exclude>module-info.class</exclude>
