@@ -1,7 +1,7 @@
 package nl.knaw.huc.di.annorepo.tools
 //
 //import java.io.File
-//import java.net.URI
+import java.net.URI
 //import kotlin.system.measureTimeMillis
 //import com.fasterxml.jackson.core.type.TypeReference
 //import com.fasterxml.jackson.databind.ObjectMapper
@@ -10,7 +10,7 @@ package nl.knaw.huc.di.annorepo.tools
 //import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 //import nl.knaw.huc.annorepo.api.WebAnnotationAsMap
-//import nl.knaw.huc.annorepo.client.AnnoRepoClient
+import nl.knaw.huc.annorepo.client.AnnoRepoClient
 //
 object PerformanceTester {
     private val log = LoggerFactory.getLogger(PerformanceTester::class.java)

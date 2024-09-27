@@ -5,8 +5,9 @@
         </encoder>
     </appender>
 
-    <logger name="org.apache.http" level="info" />
-    <logger name="io.grpc" level="warn" />
+    <logger name="org.apache.http" level="info"/>
+    <logger name="io.grpc" level="warn"/>
+    <logger name="ch.qos" level="warn"/>
 
     <root level="debug">
         <appender-ref ref="STDOUT"/>
