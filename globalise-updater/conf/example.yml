@@ -1,0 +1,5 @@
+mongo:
+  url: url-value
+  database: database-value
+  collection: collection-value
+languageDataFilePath: data/lang.tsv
