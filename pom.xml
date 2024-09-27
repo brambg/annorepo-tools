@@ -28,9 +28,11 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <annorepo.version>0.6.3</annorepo.version>
+        <kaml.version>0.61.0</kaml.version>
         <kmongo.version>4.11.0</kmongo.version>
         <log4j-api-kotlin.version>1.5.0</log4j-api-kotlin.version>
         <log4j-core.version>2.23.1</log4j-core.version>
+        <progressbar.version>0.10.1</progressbar.version>
         <serialization.version>1.7.3</serialization.version>
 
         <!-- test dependencies -->
@@ -46,7 +48,6 @@
         <maven-project-info-reports-plugin.version>3.4.3</maven-project-info-reports-plugin.version>
         <maven-shade-plugin.version>3.4.1</maven-shade-plugin.version>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
-        <kaml.version>0.61.0</kaml.version>
     </properties>
 
     <dependencies>

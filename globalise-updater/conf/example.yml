@@ -1,5 +1,5 @@
 mongo:
-  url: url-value
+  url: mongodb://localhost:27017
   database: database-value
   collection: collection-value
 languageDataFilePath: data/lang.tsv
