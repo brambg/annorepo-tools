@@ -1,15 +1,20 @@
 package nl.knaw.huc.di.annorepo.tools.updater
 
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
 import kotlin.io.path.useLines
 import kotlin.system.exitProcess
+import com.google.common.base.Stopwatch
 import com.mongodb.MongoException
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import me.tongfei.progressbar.DelegatingProgressBarConsumer
@@ -53,7 +58,74 @@ object GlobaliseUpdater {
         val corrected: Boolean,
     )
 
+    private val recordsProcessed: AtomicInteger = AtomicInteger(0)
+    private val modifiedDocuments: AtomicLong = AtomicLong(0)
+    private val errors: AtomicInteger = AtomicInteger(0)
+
     private fun doUpdates(collection: MongoCollection<Document>, config: UpdaterConfig) {
+        val languageRecords = loadLanguageRecords(config.languageDataFilePath)
+        logger.info { "records loaded" }
+        val stopwatch = Stopwatch.createStarted()
+        runBlocking {
+            launch {
+                showProgress(languageRecords, stopwatch, 5_000)
+            }
+            launch {
+                languageRecords
+                    .toUpdateGroupSequence()
+                    .forEach {
+//                        launch {
+                            doUpdateMany(it, collection)
+                            recordsProcessed.addAndGet(it.pageIds.size)
+//                            delay(1)
+//                        }
+                        delay(1)
+                    }
+            }
+        }
+        stopwatch.stop()
+    }
+
+    private suspend fun showProgress(
+        languageRecords: List<LanguageRecord>,
+        stopwatch: Stopwatch,
+        delay: Long
+    ) {
+        val total = languageRecords.size
+        val totalDouble = total.toDouble()
+        while (recordsProcessed.get() < total) {
+            val recordsDone = recordsProcessed.get()
+            val microseconds = stopwatch.elapsed(TimeUnit.MICROSECONDS)
+            val elapsedMicroseconds = formatMicroseconds(microseconds)
+            val percentage = if (total > 0) {
+                (recordsDone * 100) / totalDouble
+            } else {
+                0.toDouble()
+            }
+            val etaString = if (recordsDone > 0) {
+                val eta = (microseconds * total) / recordsDone
+                formatMicroseconds(eta)
+            } else {
+                "??:??:??"
+            }
+            logger.info { "${recordsDone}/$total records processed ( ${percentage.format(2)}% ) | $elapsedMicroseconds eta: $etaString | ${modifiedDocuments.get()} documents modified | ${errors.get()} errors" }
+            //                    println("${recordsProcessed.get()}/$total records processed | ${modifiedDocuments.get()} documents modified | ${errors.get()} errors")
+            delay(timeMillis = delay)
+        }
+    }
+
+    private fun Double.format(scale: Int) = "%.${scale}f".format(this)
+
+    private fun formatMicroseconds(microseconds: Long): String {
+        val totalSeconds = microseconds / 1_000_000
+        val hours = totalSeconds / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
+    }
+
+    private fun doUpdates0(collection: MongoCollection<Document>, config: UpdaterConfig) {
         val languageRecords = loadLanguageRecords(config.languageDataFilePath)
         ProgressBarBuilder()
 //            .setStyle(ProgressBarStyle.ASCII)
@@ -89,11 +161,13 @@ object GlobaliseUpdater {
         try {
             val result = collection.updateMany(query, updates)
             if (result.modifiedCount > 0) {
+                modifiedDocuments.getAndAdd(result.modifiedCount)
                 logger.info { "Modified document count: ${result.modifiedCount}/${updateGroup.pageIds.size}" }
                 logger.info { updateGroup }
             }
         } catch (me: MongoException) {
-            System.err.println("Unable to update due to an error: $me")
+            errors.incrementAndGet()
+            logger.error { "Unable to update due to an error: $me" }
         }
     }
 
