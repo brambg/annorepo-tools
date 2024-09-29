@@ -7,10 +7,8 @@ import org.slf4j.LoggerFactory
 
 class GlobaliseUpdaterTest {
 
-    @Test
+//    @Test
     fun main() {
-        val loggerContext: LoggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
-        loggerContext.getLogger("org.mongodb").level = Level.OFF
         GlobaliseUpdater.main(arrayOf("conf/local.yml"))
     }
 

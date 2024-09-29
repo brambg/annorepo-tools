@@ -7,6 +7,8 @@ import kotlin.io.path.Path
 import kotlin.io.path.readLines
 import kotlin.io.path.useLines
 import kotlin.system.exitProcess
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.LoggerContext
 import com.google.common.base.Stopwatch
 import com.mongodb.MongoException
 import com.mongodb.client.MongoClients
@@ -23,14 +25,19 @@ import org.apache.logging.log4j.kotlin.KotlinLogger
 import org.apache.logging.log4j.kotlin.logger
 import org.bson.Document
 import org.bson.conversions.Bson
+import org.slf4j.LoggerFactory
 
 object GlobaliseUpdater {
 
+    @JvmStatic
     fun main(args: Array<String>) {
         if (args.isEmpty()) {
             println("usage: <cmd> config-file")
             exitProcess(-1)
         }
+        val loggerContext: LoggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+        loggerContext.getLogger("org.mongodb").level = Level.OFF
+
         val configPath = args[0]
         val config = ConfigFactory.fromPath(configPath)
 
@@ -68,15 +75,15 @@ object GlobaliseUpdater {
         val stopwatch = Stopwatch.createStarted()
         runBlocking {
             launch {
-                showProgress(languageRecords, stopwatch, 5_000)
+                showProgress(languageRecords.size, stopwatch, 10_000)
             }
             launch {
                 languageRecords
                     .toUpdateGroupSequence()
                     .forEach {
 //                        launch {
-                            doUpdateMany(it, collection)
-                            recordsProcessed.addAndGet(it.pageIds.size)
+                        doUpdateMany(it, collection)
+                        recordsProcessed.addAndGet(it.pageIds.size)
 //                            delay(1)
 //                        }
                         delay(1)
@@ -87,11 +94,10 @@ object GlobaliseUpdater {
     }
 
     private suspend fun showProgress(
-        languageRecords: List<LanguageRecord>,
+        total: Int,
         stopwatch: Stopwatch,
         delay: Long
     ) {
-        val total = languageRecords.size
         val totalDouble = total.toDouble()
         while (recordsProcessed.get() < total) {
             val recordsDone = recordsProcessed.get()
