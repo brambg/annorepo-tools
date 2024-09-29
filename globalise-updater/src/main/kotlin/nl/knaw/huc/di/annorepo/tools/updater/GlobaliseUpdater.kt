@@ -168,8 +168,8 @@ object GlobaliseUpdater {
             val result = collection.updateMany(query, updates)
             if (result.modifiedCount > 0) {
                 modifiedDocuments.getAndAdd(result.modifiedCount)
-                logger.info { "Modified document count: ${result.modifiedCount}/${updateGroup.pageIds.size}" }
-                logger.info { updateGroup }
+//                logger.info { "Modified document count: ${result.modifiedCount}/${updateGroup.pageIds.size}" }
+//                logger.info { updateGroup }
             }
         } catch (me: MongoException) {
             errors.incrementAndGet()
