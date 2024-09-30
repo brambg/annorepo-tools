@@ -5,7 +5,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.Path
-import kotlin.io.path.readLines
 import kotlin.io.path.useLines
 import kotlin.system.exitProcess
 import ch.qos.logback.classic.Level
@@ -20,8 +19,6 @@ import com.mongodb.client.model.Updates
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import me.tongfei.progressbar.DelegatingProgressBarConsumer
-import me.tongfei.progressbar.ProgressBarBuilder
 import org.apache.logging.log4j.kotlin.KotlinLogger
 import org.apache.logging.log4j.kotlin.logger
 import org.bson.Document
@@ -220,36 +217,36 @@ object GlobaliseUpdater {
         }
     }
 
+//    private fun loadLanguageRecords(languageDataFilePath: String): List<LanguageRecord> {
+//        logger.logFileRead(languageDataFilePath)
+//        return Path(languageDataFilePath).readLines()
+//            .drop(1)
+//            .map { it.split("\t") }
+//            .map {
+//                LanguageRecord(
+//                    pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
+//                    languages = it[2].split(","),
+//                    corrected = it[3] != "0"
+//                )
+//            }
+//    }
+
     private fun loadLanguageRecords(languageDataFilePath: String): List<LanguageRecord> {
         logger.logFileRead(languageDataFilePath)
-        return Path(languageDataFilePath).readLines()
-            .drop(1)
-            .map { it.split("\t") }
-            .map {
-                LanguageRecord(
-                    pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
-                    languages = it[2].split(","),
-                    corrected = it[3] != "0"
-                )
-            }
+        return Path(languageDataFilePath).useLines { lines ->
+            lines
+                .drop(1)
+                .map { it.split("\t") }
+                .map {
+                    LanguageRecord(
+                        pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
+                        languages = it[2].split(","),
+                        corrected = it[3] != "0"
+                    )
+                }
+                .toList()
+        }
     }
-
-//    private fun loadLanguageRecords0(languageDataFilePath: String): List<LanguageRecord> {
-//        logger.logFileRead(languageDataFilePath)
-//        return Path(languageDataFilePath).useLines { lines ->
-//            lines
-//                .drop(1)
-//                .map { it.split("\t") }
-//                .map {
-//                    LanguageRecord(
-//                        pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
-//                        languages = it[2].split(","),
-//                        corrected = it[3] != "0"
-//                    )
-//                }
-//                .toList()
-//        }
-//    }
 
     private fun KotlinLogger.logFileRead(path: String) {
         info("<= $path")
