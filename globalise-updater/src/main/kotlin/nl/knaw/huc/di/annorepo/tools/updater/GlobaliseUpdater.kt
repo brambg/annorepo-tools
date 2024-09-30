@@ -1,6 +1,7 @@
 package nl.knaw.huc.di.annorepo.tools.updater
 
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.Path
@@ -46,6 +47,7 @@ object GlobaliseUpdater {
             val collection = database.getCollection(config.mongo.collection)
             doUpdates(collection, config)
         }
+        logger.info { "done!" }
     }
 
     data class UpdateGroup(
@@ -68,6 +70,7 @@ object GlobaliseUpdater {
     private val recordsProcessed: AtomicInteger = AtomicInteger(0)
     private val modifiedDocuments: AtomicLong = AtomicLong(0)
     private val errors: AtomicInteger = AtomicInteger(0)
+    private val updateIsFinished: AtomicBoolean = AtomicBoolean(false)
 
     private fun doUpdates(collection: MongoCollection<Document>, config: UpdaterConfig) {
         val languageRecords = loadLanguageRecords(config.languageDataFilePath)
@@ -88,6 +91,7 @@ object GlobaliseUpdater {
 //                        }
                         delay(1)
                     }
+                updateIsFinished.set(true)
             }
         }
         stopwatch.stop()
@@ -99,25 +103,29 @@ object GlobaliseUpdater {
         delay: Long
     ) {
         val totalDouble = total.toDouble()
-        while (recordsProcessed.get() < total) {
-            val recordsDone = recordsProcessed.get()
-            val microseconds = stopwatch.elapsed(TimeUnit.MICROSECONDS)
-            val elapsedMicroseconds = formatMicroseconds(microseconds)
-            val percentage = if (total > 0) {
-                (recordsDone * 100) / totalDouble
-            } else {
-                0.toDouble()
-            }
-            val etaString = if (recordsDone > 0) {
-                val eta = (microseconds * total) / recordsDone
-                formatMicroseconds(eta)
-            } else {
-                "??:??:??"
-            }
-            logger.info { "${recordsDone}/$total records processed ( ${percentage.format(2)}% ) | $elapsedMicroseconds eta: $etaString | ${modifiedDocuments.get()} documents modified | ${errors.get()} errors" }
-            //                    println("${recordsProcessed.get()}/$total records processed | ${modifiedDocuments.get()} documents modified | ${errors.get()} errors")
+        while (!updateIsFinished.get()) {
+            showProgressLine(stopwatch, total, totalDouble)
             delay(timeMillis = delay)
         }
+        showProgressLine(stopwatch, total, totalDouble)
+    }
+
+    private fun showProgressLine(stopwatch: Stopwatch, total: Int, totalDouble: Double) {
+        val recordsDone = recordsProcessed.get()
+        val microseconds = stopwatch.elapsed(TimeUnit.MICROSECONDS)
+        val elapsedMicroseconds = formatMicroseconds(microseconds)
+        val percentage = if (total > 0) {
+            (recordsDone * 100) / totalDouble
+        } else {
+            0.toDouble()
+        }
+        val etaString = if (recordsDone > 0) {
+            val eta = (microseconds * total) / recordsDone
+            formatMicroseconds(eta)
+        } else {
+            "??:??:??"
+        }
+        logger.info { "${recordsDone}/$total page records processed ( ${percentage.format(2)}% ) | $elapsedMicroseconds eta: $etaString | ${modifiedDocuments.get()} page annotations modified | ${errors.get()} errors" }
     }
 
     private fun Double.format(scale: Int) = "%.${scale}f".format(this)
@@ -180,13 +188,13 @@ object GlobaliseUpdater {
     private const val MAX_GROUP_SIZE = 25
     private fun List<LanguageRecord>.toUpdateGroupSequence(): Sequence<UpdateGroup> {
         val updateGroupMap: MutableMap<GroupKey, MutableList<String>> =
-            mutableMapOf<GroupKey, MutableList<String>>()
+            mutableMapOf()
         return sequence {
             forEach {
                 val key = GroupKey(it.languages, it.corrected)
                 val pageIds = updateGroupMap.getOrDefault(key, mutableListOf()).apply { add(it.pageId) }
                 updateGroupMap[key] = pageIds
-                if (pageIds.size ?: 0 >= MAX_GROUP_SIZE) {
+                if ((pageIds.size ?: 0) >= MAX_GROUP_SIZE) {
                     yield(
                         UpdateGroup(
                             pageIds = updateGroupMap[key]!!,
@@ -239,7 +247,8 @@ object GlobaliseUpdater {
                         corrected = it[3] != "0"
                     )
                 }
-        }.toList()
+                .toList()
+        }
     }
 
     private fun KotlinLogger.logFileRead(path: String) {

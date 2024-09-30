@@ -10,6 +10,7 @@ class GlobaliseUpdaterTest {
 //    @Test
     fun main() {
         GlobaliseUpdater.main(arrayOf("conf/local.yml"))
+//        2:28
     }
 
 }
