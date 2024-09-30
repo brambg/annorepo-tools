@@ -84,11 +84,11 @@ object GlobaliseUpdater {
                 languageRecords
                     .toUpdateGroupSequence()
                     .forEach {
-//                        launch {
-                        doUpdateMany(it, collection)
-                        recordsProcessed.addAndGet(it.pageIds.size)
-//                            delay(1)
-//                        }
+                        launch {
+                            doUpdateMany(it, collection)
+                            recordsProcessed.addAndGet(it.pageIds.size)
+                            delay(1)
+                        }
                         delay(1)
                     }
                 updateIsFinished.set(true)
@@ -139,29 +139,29 @@ object GlobaliseUpdater {
         return String.format("%02d:%02d:%02d", hours, minutes, seconds)
     }
 
-    private fun doUpdates0(collection: MongoCollection<Document>, config: UpdaterConfig) {
-        val languageRecords = loadLanguageRecords(config.languageDataFilePath)
-        ProgressBarBuilder()
-//            .setStyle(ProgressBarStyle.ASCII)
-            .setConsumer(DelegatingProgressBarConsumer(logger::info))
-            .setInitialMax(languageRecords.size.toLong())
-            .setTaskName("Updating...")
-            .showSpeed()
-            .build()
-            .use { pb ->
-                runBlocking {
-                    languageRecords
-                        .toUpdateGroupSequence()
-                        .forEach {
-                            launch {
-//                            println(it)
-                                doUpdateMany(it, collection)
-                                pb.stepBy(it.pageIds.size.toLong())
-                            }
-                        }
-                }
-            }
-    }
+//    private fun doUpdates0(collection: MongoCollection<Document>, config: UpdaterConfig) {
+//        val languageRecords = loadLanguageRecords(config.languageDataFilePath)
+//        ProgressBarBuilder()
+////            .setStyle(ProgressBarStyle.ASCII)
+//            .setConsumer(DelegatingProgressBarConsumer(logger::info))
+//            .setInitialMax(languageRecords.size.toLong())
+//            .setTaskName("Updating...")
+//            .showSpeed()
+//            .build()
+//            .use { pb ->
+//                runBlocking {
+//                    languageRecords
+//                        .toUpdateGroupSequence()
+//                        .forEach {
+//                            launch {
+////                            println(it)
+//                                doUpdateMany(it, collection)
+//                                pb.stepBy(it.pageIds.size.toLong())
+//                            }
+//                        }
+//                }
+//            }
+//    }
 
     private fun doUpdateMany(
         updateGroup: UpdateGroup,
@@ -185,7 +185,7 @@ object GlobaliseUpdater {
         }
     }
 
-    private const val MAX_GROUP_SIZE = 25
+    private const val MAX_GROUP_SIZE = 100
     private fun List<LanguageRecord>.toUpdateGroupSequence(): Sequence<UpdateGroup> {
         val updateGroupMap: MutableMap<GroupKey, MutableList<String>> =
             mutableMapOf()
@@ -234,22 +234,22 @@ object GlobaliseUpdater {
             }
     }
 
-    private fun loadLanguageRecords0(languageDataFilePath: String): List<LanguageRecord> {
-        logger.logFileRead(languageDataFilePath)
-        return Path(languageDataFilePath).useLines { lines ->
-            lines
-                .drop(1)
-                .map { it.split("\t") }
-                .map {
-                    LanguageRecord(
-                        pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
-                        languages = it[2].split(","),
-                        corrected = it[3] != "0"
-                    )
-                }
-                .toList()
-        }
-    }
+//    private fun loadLanguageRecords0(languageDataFilePath: String): List<LanguageRecord> {
+//        logger.logFileRead(languageDataFilePath)
+//        return Path(languageDataFilePath).useLines { lines ->
+//            lines
+//                .drop(1)
+//                .map { it.split("\t") }
+//                .map {
+//                    LanguageRecord(
+//                        pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
+//                        languages = it[2].split(","),
+//                        corrected = it[3] != "0"
+//                    )
+//                }
+//                .toList()
+//        }
+//    }
 
     private fun KotlinLogger.logFileRead(path: String) {
         info("<= $path")
