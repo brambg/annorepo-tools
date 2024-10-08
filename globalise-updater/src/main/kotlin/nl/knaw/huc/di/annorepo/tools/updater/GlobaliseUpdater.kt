@@ -1,15 +1,10 @@
 package nl.knaw.huc.di.annorepo.tools.updater
 
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.Path
 import kotlin.io.path.useLines
 import kotlin.system.exitProcess
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
-import com.google.common.base.Stopwatch
 import com.mongodb.MongoException
 import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
@@ -33,11 +28,9 @@ object GlobaliseUpdater {
             println("usage: <cmd> config-file")
             exitProcess(-1)
         }
-        val loggerContext: LoggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
-        loggerContext.getLogger("org.mongodb").level = Level.OFF
+        disableMongoLogging()
 
-        val configPath = args[0]
-        val config = ConfigFactory.fromPath(configPath)
+        val config = ConfigFactory.fromPath(args[0])
 
         MongoClients.create(config.mongo.url).use { mongoClient ->
             val database: MongoDatabase = mongoClient.getDatabase(config.mongo.database)
@@ -45,6 +38,11 @@ object GlobaliseUpdater {
             doUpdates(collection, config)
         }
         logger.info { "done!" }
+    }
+
+    private fun disableMongoLogging() {
+        val loggerContext: LoggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
+        loggerContext.getLogger("org.mongodb").level = Level.OFF
     }
 
     data class UpdateGroup(
@@ -64,105 +62,34 @@ object GlobaliseUpdater {
         val corrected: Boolean,
     )
 
-    private val recordsProcessed: AtomicInteger = AtomicInteger(0)
-    private val modifiedDocuments: AtomicLong = AtomicLong(0)
-    private val errors: AtomicInteger = AtomicInteger(0)
-    private val updateIsFinished: AtomicBoolean = AtomicBoolean(false)
-
     private fun doUpdates(collection: MongoCollection<Document>, config: UpdaterConfig) {
         val languageRecords = loadLanguageRecords(config.languageDataFilePath)
         logger.info { "records loaded" }
-        val stopwatch = Stopwatch.createStarted()
+        val progressKeeper = ProgressKeeper(total = languageRecords.size.toLong(), delay = 10_000)
         runBlocking {
             launch {
-                showProgress(languageRecords.size, stopwatch, 10_000)
+                progressKeeper.showProgress()
             }
             launch {
                 languageRecords
                     .toUpdateGroupSequence()
                     .forEach {
                         launch {
-                            doUpdateMany(it, collection)
-                            recordsProcessed.addAndGet(it.pageIds.size)
+                            doUpdateMany(it, collection, progressKeeper)
+                            progressKeeper.incRecordsProcessed(it.pageIds.size)
                             delay(1)
                         }
                         delay(1)
                     }
-                updateIsFinished.set(true)
+                progressKeeper.stop()
             }
         }
-        stopwatch.stop()
     }
-
-    private suspend fun showProgress(
-        total: Int,
-        stopwatch: Stopwatch,
-        delay: Long
-    ) {
-        val totalDouble = total.toDouble()
-        while (!updateIsFinished.get()) {
-            showProgressLine(stopwatch, total, totalDouble)
-            delay(timeMillis = delay)
-        }
-        showProgressLine(stopwatch, total, totalDouble)
-    }
-
-    private fun showProgressLine(stopwatch: Stopwatch, total: Int, totalDouble: Double) {
-        val recordsDone = recordsProcessed.get()
-        val microseconds = stopwatch.elapsed(TimeUnit.MICROSECONDS)
-        val elapsedMicroseconds = formatMicroseconds(microseconds)
-        val percentage = if (total > 0) {
-            (recordsDone * 100) / totalDouble
-        } else {
-            0.toDouble()
-        }
-        val etaString = if (recordsDone > 0) {
-            val eta = (microseconds * total) / recordsDone
-            formatMicroseconds(eta)
-        } else {
-            "??:??:??"
-        }
-        logger.info { "${recordsDone}/$total page records processed ( ${percentage.format(2)}% ) | $elapsedMicroseconds eta: $etaString | ${modifiedDocuments.get()} page annotations modified | ${errors.get()} errors" }
-    }
-
-    private fun Double.format(scale: Int) = "%.${scale}f".format(this)
-
-    private fun formatMicroseconds(microseconds: Long): String {
-        val totalSeconds = microseconds / 1_000_000
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds)
-    }
-
-//    private fun doUpdates0(collection: MongoCollection<Document>, config: UpdaterConfig) {
-//        val languageRecords = loadLanguageRecords(config.languageDataFilePath)
-//        ProgressBarBuilder()
-////            .setStyle(ProgressBarStyle.ASCII)
-//            .setConsumer(DelegatingProgressBarConsumer(logger::info))
-//            .setInitialMax(languageRecords.size.toLong())
-//            .setTaskName("Updating...")
-//            .showSpeed()
-//            .build()
-//            .use { pb ->
-//                runBlocking {
-//                    languageRecords
-//                        .toUpdateGroupSequence()
-//                        .forEach {
-//                            launch {
-////                            println(it)
-//                                doUpdateMany(it, collection)
-//                                pb.stepBy(it.pageIds.size.toLong())
-//                            }
-//                        }
-//                }
-//            }
-//    }
 
     private fun doUpdateMany(
         updateGroup: UpdateGroup,
-        collection: MongoCollection<Document>
+        collection: MongoCollection<Document>,
+        progressKeeper: ProgressKeeper
     ) {
         val query: Bson = Filters.`in`("annotation.body.metadata.document", updateGroup.pageIds)
         val updates = Updates.combine(
@@ -172,12 +99,10 @@ object GlobaliseUpdater {
         try {
             val result = collection.updateMany(query, updates)
             if (result.modifiedCount > 0) {
-                modifiedDocuments.getAndAdd(result.modifiedCount)
-//                logger.info { "Modified document count: ${result.modifiedCount}/${updateGroup.pageIds.size}" }
-//                logger.info { updateGroup }
+                progressKeeper.incModifiedDocuments(result.modifiedCount)
             }
         } catch (me: MongoException) {
-            errors.incrementAndGet()
+            progressKeeper.incErrors()
             logger.error { "Unable to update due to an error: $me" }
         }
     }
@@ -191,7 +116,7 @@ object GlobaliseUpdater {
                 val key = GroupKey(it.languages, it.corrected)
                 val pageIds = updateGroupMap.getOrDefault(key, mutableListOf()).apply { add(it.pageId) }
                 updateGroupMap[key] = pageIds
-                if ((pageIds.size ?: 0) >= MAX_GROUP_SIZE) {
+                if (pageIds.size >= MAX_GROUP_SIZE) {
                     yield(
                         UpdateGroup(
                             pageIds = updateGroupMap[key]!!,
@@ -216,20 +141,6 @@ object GlobaliseUpdater {
             }
         }
     }
-
-//    private fun loadLanguageRecords(languageDataFilePath: String): List<LanguageRecord> {
-//        logger.logFileRead(languageDataFilePath)
-//        return Path(languageDataFilePath).readLines()
-//            .drop(1)
-//            .map { it.split("\t") }
-//            .map {
-//                LanguageRecord(
-//                    pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
-//                    languages = it[2].split(","),
-//                    corrected = it[3] != "0"
-//                )
-//            }
-//    }
 
     private fun loadLanguageRecords(languageDataFilePath: String): List<LanguageRecord> {
         logger.logFileRead(languageDataFilePath)
