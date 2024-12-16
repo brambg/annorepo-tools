@@ -1,0 +1,6 @@
+mongo:
+  url: mongodb://localhost
+  database: annorepo
+  collection: globalise-pages
+#  collection: globalise-demo-0
+languageDataFilePath: data/pages.lang.tsv

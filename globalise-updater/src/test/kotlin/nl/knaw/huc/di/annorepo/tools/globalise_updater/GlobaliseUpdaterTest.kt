@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.annorepo.tools.updater
+package nl.knaw.huc.di.annorepo.tools.globalise_updater
 
 import org.junit.jupiter.api.Test
 

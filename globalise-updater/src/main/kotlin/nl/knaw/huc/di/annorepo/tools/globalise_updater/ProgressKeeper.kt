@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.annorepo.tools.updater
+package nl.knaw.huc.di.annorepo.tools.globalise_updater
 
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean

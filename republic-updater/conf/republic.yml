@@ -1,0 +1,9 @@
+mongo:
+  url: mongodb://republic-annorepo-mongodb/
+  database: annorepo
+  collection: republic-2024.11.30
+
+annorepo:
+  url: https://annorepo.goetgevonden.nl
+
+provenanceDataFilePath: data/provenance.csv

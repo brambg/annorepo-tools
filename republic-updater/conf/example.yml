@@ -1,0 +1,7 @@
+mongo:
+  url: mongodb://localhost:27017
+  database: database-value
+  collection: collection-value
+annorepo:
+  url: https://annorepo.com
+provenanceDataFilePath: data/provenance.csv

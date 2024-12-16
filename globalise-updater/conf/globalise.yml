@@ -1,0 +1,5 @@
+mongo:
+  url: mongodb://globalise-annorepo-mongodb/
+  database: annorepo
+  collection: globalise-2024-03-18
+languageDataFilePath: pages.lang.tsv

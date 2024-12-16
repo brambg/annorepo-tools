@@ -1,4 +1,4 @@
-package nl.knaw.huc.di.annorepo.tools.updater
+package nl.knaw.huc.di.annorepo.tools.globalise_updater
 
 import kotlin.io.path.Path
 import kotlin.io.path.useLines

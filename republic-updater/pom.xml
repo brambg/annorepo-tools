@@ -6,12 +6,12 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>globalise-updater</artifactId>
+    <artifactId>republic-updater</artifactId>
     <packaging>jar</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
 
     <properties>
-        <mainClass>nl.knaw.huc.di.annorepo.tools.globalise_updater.GlobaliseUpdater</mainClass>
+        <mainClass>nl.knaw.huc.di.annorepo.tools.republic_updater.RepublicUpdater</mainClass>
     </properties>
 
     <parent>

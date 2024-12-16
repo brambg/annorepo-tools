@@ -1,0 +1,9 @@
+mongo:
+  url: mongodb://localhost
+  database: annorepo
+  collection: republic-2024.02.23
+
+annorepo:
+  url: http://localhost:2023
+
+provenanceDataFilePath: data/provenance.csv

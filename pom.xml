@@ -12,6 +12,7 @@
     <modules>
         <module>performance-tester</module>
         <module>globalise-updater</module>
+        <module>republic-updater</module>
     </modules>
 
     <properties>
