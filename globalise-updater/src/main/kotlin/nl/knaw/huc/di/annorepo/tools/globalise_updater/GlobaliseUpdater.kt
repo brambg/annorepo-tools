@@ -58,7 +58,7 @@ object GlobaliseUpdater {
 
     private fun doUpdates(collection: MongoCollection<Document>, config: UpdaterConfig) {
         val languageRecords = loadLanguageRecords(config.languageDataFilePath)
-        logger.info { "records loaded" }
+        logger.info { "${languageRecords.size} records loaded" }
         val progressKeeper = ProgressKeeper(total = languageRecords.size.toLong(), delay = 10_000)
         runBlocking {
             launch {
@@ -90,7 +90,7 @@ object GlobaliseUpdater {
             Updates.set(
                 "annotation.body.metadata.lang",
                 updateGroup.languages.map { ol ->
-                    val newL = ol.replace("heb", "hbo").replace("grc", "gre")
+                    val newL = ol.replace("heb", "hbo")
                     mapOf(
                         "iso" to newL,
                         "label" to languageLabels[newL]

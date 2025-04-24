@@ -22,7 +22,7 @@ run-performance-tester: performance-tester/target/performance-tester-$(call vers
 
 # globalise-updater
 globalise-updater/target/globalise-updater-$(call version_fn).jar: .make/.version $(shell find globalise-updater/src/main -type f) pom.xml globalise-updater/pom.xml
-	mvn --projects globalise-updater --also-make package
+	mvn --projects globalise-updater --also-make clean package
 
 .PHONY: run-globalise-updater-local
 run-globalise-updater-local: globalise-updater/target/globalise-updater-$(call version_fn).jar
@@ -43,7 +43,7 @@ push-globalise-updater: .make/.push-globalise-updater
 
 # republic-updater
 republic-updater/target/republic-updater-$(call version_fn).jar: .make/.version $(shell find republic-updater/src/main -type f) pom.xml republic-updater/pom.xml
-	mvn --projects republic-updater --also-make package
+	mvn --projects republic-updater --also-make clean package
 
 .PHONY: run-republic-updater-local
 run-republic-updater-local: republic-updater/target/republic-updater-$(call version_fn).jar
