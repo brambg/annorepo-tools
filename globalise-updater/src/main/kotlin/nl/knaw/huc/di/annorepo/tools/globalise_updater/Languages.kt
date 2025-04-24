@@ -15,10 +15,11 @@ object Languages {
         "bug" to "Buginese",
         "jpn" to "Japanese",
         "ota" to "Ottoman Turkish",
+        "guj" to "Gujarati",
         "fas" to "Persian",
         "lat" to "Latin",
         "hbo" to "Ancient Hebrew",  // changed code from ‘heb’ which is modern Hebrew
-        "gre" to "Ancient Greek",
+        "grc" to "Ancient Greek",
         "ita" to "Italian",
         "msa" to "Malay",
         "por" to "Portuguese",
