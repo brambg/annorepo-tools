@@ -1,7 +1,5 @@
 package nl.knaw.huc.di.annorepo.tools.globalise_updater
 
-import kotlin.io.path.Path
-import kotlin.io.path.useLines
 import kotlin.system.exitProcess
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.LoggerContext
@@ -14,11 +12,13 @@ import com.mongodb.client.model.Updates
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.apache.logging.log4j.kotlin.KotlinLogger
 import org.apache.logging.log4j.kotlin.logger
 import org.bson.Document
 import org.bson.conversions.Bson
 import org.slf4j.LoggerFactory
+import nl.knaw.huc.di.annorepo.tools.globalise_updater.Languages.LanguageRecord
+import nl.knaw.huc.di.annorepo.tools.globalise_updater.Languages.languageLabels
+import nl.knaw.huc.di.annorepo.tools.globalise_updater.Languages.loadLanguageRecords
 
 object GlobaliseUpdater {
 
@@ -49,12 +49,6 @@ object GlobaliseUpdater {
         val pageIds: List<String>,
         val languages: List<String>,
         val corrected: Boolean
-    )
-
-    data class LanguageRecord(
-        val pageId: String,
-        val languages: List<String>,
-        val corrected: Boolean,
     )
 
     data class GroupKey(
@@ -93,7 +87,15 @@ object GlobaliseUpdater {
     ) {
         val query: Bson = Filters.`in`("annotation.body.metadata.document", updateGroup.pageIds)
         val updates = Updates.combine(
-            Updates.set("annotation.body.metadata.lang", updateGroup.languages),
+            Updates.set(
+                "annotation.body.metadata.lang",
+                updateGroup.languages.map { ol ->
+                    val newL = ol.replace("heb", "hbo").replace("grc", "gre")
+                    mapOf(
+                        "iso" to newL,
+                        "label" to languageLabels[newL]
+                    )
+                }),
             Updates.set("annotation.body.metadata.langCorrected", updateGroup.corrected)
         )
         try {
@@ -142,29 +144,5 @@ object GlobaliseUpdater {
         }
     }
 
-    private fun loadLanguageRecords(languageDataFilePath: String): List<LanguageRecord> {
-        logger.logFileRead(languageDataFilePath)
-        return Path(languageDataFilePath).useLines { lines ->
-            lines
-                .drop(1)
-                .map { it.split("\t") }
-                .map {
-                    LanguageRecord(
-                        pageId = "NL-HaNA_1.04.02_${it[0]}_${it[1]}",
-                        languages = it[2].split(","),
-                        corrected = it[3] != "0"
-                    )
-                }
-                .toList()
-        }
-    }
-
-    private fun KotlinLogger.logFileRead(path: String) {
-        info("<= $path")
-    }
-
-    private fun KotlinLogger.logFileWrite(path: String) {
-        info("=> $path")
-    }
 }
 

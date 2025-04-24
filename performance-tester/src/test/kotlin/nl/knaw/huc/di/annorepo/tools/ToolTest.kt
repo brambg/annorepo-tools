@@ -4,6 +4,7 @@ import java.net.URI
 import kotlin.test.fail
 import org.junit.jupiter.api.Test
 import arrow.core.raise.either
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.apache.logging.log4j.kotlin.logger
 import nl.knaw.huc.annorepo.client.AnnoRepoClient
 
@@ -11,10 +12,14 @@ class ToolTest {
 
     @Test
     fun `test tool`() {
-        val c = AnnoRepoClient(serverURI = URI("http://localhost:8080"))
+        val c = AnnoRepoClient(serverURI = URI("http://localhost:2023"), apiKey = "root")
+        either {
+            logger.info { c.getMyContainers().bind().containers.pp() }
+        }
 //        val c = AnnoRepoClient(serverURI = URI("https://annorepo.globalise.huygens.knaw.nl"))
-        val query = mapOf("body.type" to "px:Page", "body.metadata.inventoryNumber" to "9986")
-        val result = c.filterContainerAnnotations(containerName = "globalise-2024-03-18", query = query)
+        val query = mapOf("type" to "Annotation")
+//        val query = mapOf("body.type" to "px:Page", "body.metadata.inventoryNumber" to "9986")
+        val result = c.filterContainerAnnotations(containerName = "republic-2024.05.17", query = query)
         var l = 0
         result.fold(
             { e -> println(e.message) },
@@ -26,6 +31,7 @@ class ToolTest {
             }
         )
         println("$l results")
+
     }
 
 //    val containersToRemove = listOf(
@@ -49,7 +55,8 @@ class ToolTest {
     @Test
     fun `test query`() {
         val c = AnnoRepoClient(serverURI = URI("http://localhost:8080"), apiKey = "root")
-        val query = mapOf("body.type" to "Page"
+        val query = mapOf(
+            "body.type" to "Page"
         )
         val containerName = "republic-2024.02.23"
         either {
@@ -73,5 +80,8 @@ class ToolTest {
             fail()
         }
     }
+
+    val oMapper = jacksonObjectMapper().writerWithDefaultPrettyPrinter()
+    private fun Any.pp(): String = oMapper.writeValueAsString(this)
 
 }

@@ -25,4 +25,34 @@ class ConfigFactoryTest {
         }
     }
 
+//    @Test
+//    fun `create and test 3 api-keys`() {
+////        val serverURI = URI("http://localhost:2023")
+////        val ac = AnnoRepoClient(
+////            serverURI = serverURI,
+////            apiKey = "root"
+////        )
+//        either {
+//            val about = ac.getAbout().bind()
+//            logger.info { about }
+//            val apiKey1 = UUID.randomUUID().toString()
+//            val apiKey2 = UUID.randomUUID().toString()
+//            val apiKey3 = UUID.randomUUID().toString()
+//            val userEntries = listOf(
+//                UserEntry("jona_schlegel", apiKey1),
+//                UserEntry("leon_van_wissen", apiKey2),
+//                UserEntry("globalise_webapp", apiKey3)
+//            )
+//            val result = ac.addUsers(userEntries).bind()
+//            logger.info { result }
+//            listOf(apiKey1, apiKey2, apiKey3).forEach { apiKey ->
+//                logger.info { "api-key=$apiKey" }
+//                val arc = AnnoRepoClient(serverURI = serverURI, apiKey = apiKey)
+//                val myContainers = arc.getMyContainers().bind()
+//                logger.info { myContainers }
+//            }
+//        }
+//
+//    }
+
 }
